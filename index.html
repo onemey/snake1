@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра Змейка</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #000;
+            margin: 0;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid #fff;
+            touch-action: none; /* Отключаем стандартные жесты */
+        }
+        #controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+            width: 200px; /* Ширина контейнера кнопок */
+        }
+        #up {
+            grid-column: 1 / span 2; /* Кнопка вверх занимает 2 колонки */
+        }
+        button {
+            background-color: #fff;
+            color: #000;
+            border: none;
+            padding: 15px; /* Увеличиваем отступы кнопок */
+            font-size: 24px; /* Увеличиваем размер шрифта */
+            cursor: pointer;
+            border-radius: 5px; /* Закругляем углы кнопок */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="controls">
+        <button id="up">⬆️</button>
+        <button id="left">⬅️</button>
+        <button id="right">➡️</button>
+        <button id="down">⬇️</button>
+    </div>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Настройки игры
+        const box = 20;
+        let snake, direction, food;
+
+        function initGame() {
+            snake = [{ x: 9 * box, y: 9 * box }];
+            direction = "RIGHT";
+            food = {
+                x: Math.floor(Math.random() * 20) * box,
+                y: Math.floor(Math.random() * 20) * box
+            };
+        }
+
+        // Управление клавишами
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+            if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+            if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+            if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+        });
+
+        // Управление с помощью кнопок
+        document.getElementById("left").addEventListener("click", () => {
+            if (direction !== "RIGHT") direction = "LEFT";
+        });
+        document.getElementById("up").addEventListener("click", () => {
+            if (direction !== "DOWN") direction = "UP";
+        });
+        document.getElementById("right").addEventListener("click", () => {
+            if (direction !== "LEFT") direction = "RIGHT";
+        });
+        document.getElementById("down").addEventListener("click", () => {
+            if (direction !== "UP") direction = "DOWN";
+        });
+
+        // Основная функция игры
+        function draw() {
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = (i === 0) ? "#00FF00" : "#FFFFFF";
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            ctx.fillStyle = "#FF0000";
+            ctx.fillRect(food.x, food.y, box, box);
+
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            if (direction === "LEFT") snakeX -= box;
+            if (direction === "UP") snakeY -= box;
+            if (direction === "RIGHT") snakeX += box;
+            if (direction === "DOWN") snakeY += box;
+
+            // Проверка на столкновение с едой
+            if (snakeX === food.x && snakeY === food.y) {
+                food = {
+                    x: Math.floor(Math.random() * 20) * box,
+                    y: Math.floor(Math.random() * 20) * box
+                };
+            } else {
+                snake.pop(); // Удаляем последний элемент
+            }
+
+            // Проверка на столкновение с границами
+            if (snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(snakeX, snakeY, snake)) {
+                clearInterval(game);
+                if (confirm("Игра окончена! Начать новую игру?")) {
+                    initGame();
+                    game = setInterval(draw, 100);
+                }
+            }
+
+            const newHead = { x: snakeX, y: snakeY };
+            snake.unshift(newHead); // Добавляем новый элемент в начало
+        }
+
+        // Проверка на столкновение с самой собой
+        function collision(headX, headY, snake) {
+            for (let i = 1; i < snake.length; i++) {
+                if (headX === snake[i].x && headY === snake[i].y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        const startGame = confirm("Хотите начать игру?");
+        if (startGame) {
+            initGame();
+            const game = setInterval(draw, 100); // Запуск игры
+        }
+    </script>
+</body>
+</html>
